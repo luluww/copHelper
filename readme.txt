@@ -6,3 +6,10 @@ Use a database to store Personal information, like he or she works at xxx compan
 Use python to check if any overlap blablabla
 
 2019-4-12
+- create readme.txt
+- create cophelper.py
+	- try to create database by python
+		- install mysql-connector-python
+		- install flake
+
+problem: can't not build localhost
