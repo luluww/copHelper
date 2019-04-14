@@ -13,3 +13,10 @@ Use python to check if any overlap blablabla
 		- install flake
 
 problem: can't not build localhost
+
+2019-4-13
+- decide to use sqlite to do database part
+- create sqlite database files
+- create database and tables in py file
+- create interactive menu to enter data
+so far so good
