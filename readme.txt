@@ -20,3 +20,16 @@ problem: can't not build localhost
 - create database and tables in py file
 - create interactive menu to enter data
 so far so good
+
+2019-4-15
+to-do-list:
+- relation graph
+- check if two nodes connect
+
+2019-4-17
+- add myNetwork file to create mynetwork class for relationship network
+- modified cophelper file to add network
+- to be done: 
+	- read/write network dictionary into csv file
+	- add more data to check functions
+

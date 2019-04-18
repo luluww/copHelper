@@ -7,6 +7,11 @@ Created on Fri Apr 12 21:44:49 2019
 
 import sqlite3
 import datetime
+from mynetwork import myNetwork5
+import csv
+
+#read csv file to get network dictionary
+network=myNetwork()
 
 #create database
 conn=sqlite3.connect('copdb.sqlite')
@@ -35,6 +40,8 @@ cur.execute('''create table if not exists experiences(exp_no varchar(20) not nul
                                         location varchar(50) not null,
                                         primary key (exp_no),
                                         foreign key (sus_no) references suspects(sus_no))''')
+
+nets={}
 
 def strToDate(s):
     [year,month,day]=[int(item) for item in s.split('-')]
@@ -73,26 +80,67 @@ def print_menu():
     print("Exit: 5")
     print(70*'*')
     
+#get suspect experience from database in the type of list
+def get_experience_from_db(sus_no):
+    sus_exp=[]
+    cur.execute('''select * from experiences where sus_no==?''',(sus_no))
+    all_records=cur.fetchall()
+    for record in all_records:
+        #get start date, end date, and location
+        sus_exp.append([record[2],record[3],record[4]])
+    return sus_exp
+
+def add_suspect_into_network():
+    #get suspect information from cop
+    sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no=getSuspectInfo()
+    #enter basic information into database
+    cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no) values(?,?,?,?,?,?,?,?)''',(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no))
+    #ask cop to enter suspect experience
+    choice=input("Enter suspect experience: y/n")
+    if choice=='y':
+       cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience())) 
+    network.add_node(sus_no)
+    #compare suspect experience with all suspects in the database, if two are connected, add relation into our network
+    sus1_exp=get_experience_from_db(sus_no)
+    for sus in network().nodes():
+        if sus!=sus_no:
+            sus2_exp=get_experience_from_db(sus)
+            if are_acquaintances(sus1_exp,sus2_exp):
+                network().add_relation({sus,sus_no})
+                
+def are_acquaintances(exp1,exp2):
+    for e1 in exp1:
+        for e2 in exp2:
+            if e1[2]==e2[2]:
+                if time_overlap(strToDate(e1[0]),strToDate(e1[1]),strToDate(e2[0]),strToDate(e2[1])):
+                    return True
+    return False
+                
+def time_overlap(start_date1,end_date1,start_date2,end_date2):
+    if start_date1>start_date2 and start_date1<end_date2:
+        return True
+    if start_date2>start_date1 and start_date2<end_date1:
+        return True
+    return False
+                
 def main_menu():
     loop=True
     while loop:
         print_menu()
         choice=int(input("Enter your choice [1-5]: "))
         if choice==1:
-            case_no,case_name=getCaseInfo()
-            cur.execute('''insert into cases(case_no,case_name) values(?,?)''',(case_no,case_name))
+            cur.execute('''insert into cases(case_no,case_name) values(?,?)''',(getCaseInfo()))
         elif choice==2:
-            cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no) values(?,?,?,?,?,?,?,?)''',(getSuspectInfo()))
+            add_suspect_into_network()
         elif choice==3:
-            cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience()))
-        elif choice==4:
             print("Do nothing")
-        elif choice==5:
+        elif choice==4:
             loop=False
         conn.commit()
     
 
 if __name__=='__main__':
     main_menu()
+    #save network dictionary into csv file
     conn.close()
 
