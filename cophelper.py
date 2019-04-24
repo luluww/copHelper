@@ -7,11 +7,22 @@ Created on Fri Apr 12 21:44:49 2019
 
 import sqlite3
 import datetime
-from mynetwork import myNetwork5
-import csv
+from mynetwork import myNetwork
 
 #read csv file to get network dictionary
-network=myNetwork()
+myFile='network.txt'
+myDict={}
+
+try:
+    with open(myFile,'r') as f:
+        for line in f:
+            dict_key,*dict_value=line.split()
+            myDict[dict_key]=dict_value
+except:
+    print('Create a new file')    
+finally:
+    network=myNetwork(myDict)
+    
 
 #create database
 conn=sqlite3.connect('copdb.sqlite')
@@ -66,8 +77,8 @@ def getSuspectInfo():
 def getExperience():
     exp_no=input("file number: ")
     sus_no=input("Suspect number: ")
-    start_date=input("Start date: ")
-    end_date=input("End date: ")
+    start_date=input("Start date(YYYY-MM-DD): ")
+    end_date=input("End date(YYYY-MM-DD): ")
     location=input("Location: ")
     return exp_no,sus_no,start_date,end_date,location
 
@@ -83,7 +94,7 @@ def print_menu():
 #get suspect experience from database in the type of list
 def get_experience_from_db(sus_no):
     sus_exp=[]
-    cur.execute('''select * from experiences where sus_no==?''',(sus_no))
+    cur.execute('''select * from experiences where sus_no=?''',(sus_no,))
     all_records=cur.fetchall()
     for record in all_records:
         #get start date, end date, and location
@@ -95,18 +106,22 @@ def add_suspect_into_network():
     sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no=getSuspectInfo()
     #enter basic information into database
     cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no) values(?,?,?,?,?,?,?,?)''',(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no))
+    conn.commit()
     #ask cop to enter suspect experience
-    choice=input("Enter suspect experience: y/n")
+    choice=input("Enter suspect experience: y/n ")
     if choice=='y':
        cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience())) 
+    conn.commit()
     network.add_node(sus_no)
+    print(network.return_Dict())
     #compare suspect experience with all suspects in the database, if two are connected, add relation into our network
     sus1_exp=get_experience_from_db(sus_no)
-    for sus in network().nodes():
+    for sus in network.nodes():
         if sus!=sus_no:
             sus2_exp=get_experience_from_db(sus)
             if are_acquaintances(sus1_exp,sus2_exp):
-                network().add_relation({sus,sus_no})
+                network.add_relation({sus,sus_no})
+                print(network.return_Dict())
                 
 def are_acquaintances(exp1,exp2):
     for e1 in exp1:
@@ -130,17 +145,32 @@ def main_menu():
         choice=int(input("Enter your choice [1-5]: "))
         if choice==1:
             cur.execute('''insert into cases(case_no,case_name) values(?,?)''',(getCaseInfo()))
+            conn.commit()
         elif choice==2:
             add_suspect_into_network()
         elif choice==3:
-            print("Do nothing")
+            cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience()))
+            conn.commit()
         elif choice==4:
+            print('xxx')
+        elif choice==5:
             loop=False
-        conn.commit()
+        
     
 
 if __name__=='__main__':
     main_menu()
     #save network dictionary into csv file
+    myDict=network.return_Dict()
+    print(myDict)
+    with open(myFile,'w') as f:
+        line=''
+        for k in myDict:
+            line+=k+' '
+            for element in myDict[k]:
+                line+=element+' '
+            line+='\n'
+            f.write(line)
+            line=''
     conn.close()
 

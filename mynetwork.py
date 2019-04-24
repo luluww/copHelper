@@ -13,7 +13,7 @@ class myNetwork(object):
     def __init__(self,net_dict=None):
         if net_dict==None:
             net_dict={}
-            self.__net_dict=net_dict
+        self.__net_dict=net_dict
         
     def nodes(self):
         return list(self.__net_dict.keys())
@@ -60,6 +60,9 @@ class myNetwork(object):
                 if extended_path:
                     return extended_path
         return None
+    
+    def return_Dict(self):
+        return self.__net_dict
     
    
     
