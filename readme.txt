@@ -33,3 +33,11 @@ to-do-list:
 	- read/write network dictionary into csv file
 	- add more data to check functions
 
+2019-4-23
+- add read/write file
+- insert data to test
+- more details to finish
+	- id already exists ?
+	- check if two suspects know each other?
+	- repeat inserting suspect experiences ?
+	- if two suspects live in same street, they might know each other
