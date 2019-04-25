@@ -40,11 +40,10 @@ cur.execute('''create table if not exists suspects(sus_no varchar(20) not null,
                                      birth_date varchar(10) not null,
                                      street_name varchar(50) not null,
                                      street_no integer not null,
-                                     case_no varchar(20) not null,
                                      primary key (sus_no),
                                      foreign key(case_no) references cases(case_no))''')
 
-cur.execute('''create table if not exists experiences(exp_no varchar(20) not null,
+cur.execute('''create table if not exists experiences(exp_no integer auto_increment,
                                         sus_no varchar(20) not null,
                                         start_date varchar(10) not null,
                                         end_date varchar(10) not null,
@@ -71,16 +70,20 @@ def getSuspectInfo():
     birth_date=input("Date of birth(YYYY-MM-DD): ")
     street_name=input("Street name: ")
     street_no=input("Street number: ")
-    case_no=input("Case number: ")
-    return sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no
+    return sus_no,first_name,last_name,gender,birth_date,street_name,street_no
 
 def getExperience():
-    exp_no=input("file number: ")
     sus_no=input("Suspect number: ")
     start_date=input("Start date(YYYY-MM-DD): ")
     end_date=input("End date(YYYY-MM-DD): ")
     location=input("Location: ")
-    return exp_no,sus_no,start_date,end_date,location
+    return sus_no,start_date,end_date,location
+
+def getExperienceWithSusNo():
+    start_date=input("Start date(YYYY-MM-DD): ")
+    end_date=input("End date(YYYY-MM-DD): ")
+    location=input("Location: ")
+    return start_date,end_date,location
 
 def print_menu():
     print(30* '*', "Menu",30*'*')
@@ -88,7 +91,8 @@ def print_menu():
     print("Enter Suspect Information: 2")
     print("Enter Suspect Experience: 3")
     print("Check if two suspects are connected: 4")
-    print("Exit: 5")
+    print("Print connection network: 5")
+    print("Exit: 6")
     print(70*'*')
     
 #get suspect experience from database in the type of list
@@ -101,35 +105,63 @@ def get_experience_from_db(sus_no):
         sus_exp.append([record[2],record[3],record[4]])
     return sus_exp
 
-def add_suspect_into_network():
+def add_suspect():
     #get suspect information from cop
     sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no=getSuspectInfo()
     #enter basic information into database
-    cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no) values(?,?,?,?,?,?,?,?)''',(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no))
+    cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no) values(?,?,?,?,?,?,?)''',(sus_no,first_name,last_name,gender,birth_date,street_name,street_no,case_no))
     conn.commit()
     #ask cop to enter suspect experience
     choice=input("Enter suspect experience: y/n ")
     if choice=='y':
-       cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience())) 
-    conn.commit()
-    network.add_node(sus_no)
-    print(network.return_Dict())
-    #compare suspect experience with all suspects in the database, if two are connected, add relation into our network
-    sus1_exp=get_experience_from_db(sus_no)
-    for sus in network.nodes():
-        if sus!=sus_no:
-            sus2_exp=get_experience_from_db(sus)
-            if are_acquaintances(sus1_exp,sus2_exp):
-                network.add_relation({sus,sus_no})
-                print(network.return_Dict())
+        loop=1
+        while loop:
+            cur.execute('''insert into experiences(sus_no,start_date,end_date,location) values(?,?,?,?)''',(sus_no,getExperienceWithSusNo())) 
+            conn.commit()
+            loop=input("Continue entering experience? Yes-1, No-0 :")
+    
+#    network.add_node(sus_no)
+#   
+#    #compare suspect experience with all suspects in the database, if two are connected, add relation into our network
+#    sus1_exp=get_experience_from_db(sus_no)
+#    for sus in network.nodes():
+#        if sus!=sus_no:
+#            sus2_exp=get_experience_from_db(sus)
+#            if work_together(sus1_exp,sus2_exp):
+#                network.add_relation({sus,sus_no})
+#                print(network.return_Dict())
                 
-def are_acquaintances(exp1,exp2):
+def work_together(sus_no1,sus_no2):
+    exp1=get_experience_from_db(sus_no1)
+    exp2=get_experience_from_db(sus_no2)
     for e1 in exp1:
         for e2 in exp2:
             if e1[2]==e2[2]:
                 if time_overlap(strToDate(e1[0]),strToDate(e1[1]),strToDate(e2[0]),strToDate(e2[1])):
                     return True
     return False
+
+def get_suspect_address(sus_no):
+    cur.execute('''select street_name,street_no from suspects where sus_no=?''',(sus_no,))
+    street_name,street_no=cur.fetchone()
+    return street_name,street_no
+
+def are_neighbours(sus_no1,sus_no2):
+    street_name1,street_no1=get_suspect_address(sus_no1)
+    street_name2,street_no2=get_suspect_address(sus_no2)
+    if street_name1==street_name2:
+        if abs(street_no1-street_no2)<=5:
+            return True
+    return False
+    
+def are_acquaintances(sus_no1,sus_no2):
+    #if two suspects work together
+    if work_together(sus_no1,sus_no2):
+        return True
+    #if two suspects are neighbours(same street, difference of street numbers is less than 5)
+    if are_neighbours(sus_no1,sus_no2):
+        return True
+    #if two suspects have common friend
                 
 def time_overlap(start_date1,end_date1,start_date2,end_date2):
     if start_date1>start_date2 and start_date1<end_date2:
@@ -144,16 +176,27 @@ def main_menu():
         print_menu()
         choice=int(input("Enter your choice [1-5]: "))
         if choice==1:
-            cur.execute('''insert into cases(case_no,case_name) values(?,?)''',(getCaseInfo()))
-            conn.commit()
+            try:
+                cur.execute('''insert into cases(case_no,case_name) values(?,?)''',(getCaseInfo()))
+                conn.commit()
+            except:
+                print("Wrong info, try again")
         elif choice==2:
-            add_suspect_into_network()
+            try:
+                add_suspect()
+            except:
+                print("Wrong info, try again")   
         elif choice==3:
-            cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience()))
-            conn.commit()
+            try:
+                cur.execute('''insert into experiences(sus_no,start_date,end_date,location) values(?,?,?,?)''',(getExperience()))
+                conn.commit()
+            except:
+                print("Wrong info, try again")
         elif choice==4:
             print('xxx')
         elif choice==5:
+            print("x")
+        elif choice==6:
             loop=False
         
     

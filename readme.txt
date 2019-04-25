@@ -41,3 +41,13 @@ to-do-list:
 	- check if two suspects know each other?
 	- repeat inserting suspect experiences ?
 	- if two suspects live in same street, they might know each other
+
+2019-4-24
+- change an attribute to auto_increment
+- add exceptions
+- add repeating entering experiences option
+- add function to check two suspects are acquaintances 
+- To do list:
+	- finish the function to check if two suspects have common friend
+	- add function to input all relationships into dict for network
+	- import networkx to draw relationship graph
