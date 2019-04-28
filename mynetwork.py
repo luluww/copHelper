@@ -38,7 +38,24 @@ class myNetwork(object):
         else:
             self.__net_dict[node1]=[node2]
             
-    def __generate_relations(self):
+    def if_in_relation(self,relation):
+        relation=set(relation)
+        node1=relation.pop()
+        node2=relation.pop()
+        if node2 in self.__net_dict[node1]:
+            return True
+        return False
+    
+    def if_share_friend(self,two_sus):
+        two_sus=set(two_sus)
+        node1=two_sus.pop()
+        node2=two_sus.pop()
+        for friend in self.__net_dict[node1]:
+            if friend in self.__net_dict[node2]:
+                return True
+        return False
+            
+    def generate_relations(self):
         relations=[]
         for node in self.__net_dict:
             for acquaintance  in self.__net_dict[node]:
@@ -46,20 +63,20 @@ class myNetwork(object):
                     relations.append({node,acquaintance})
         return relations
     
-    #check if two suspects are connected
-    def find_path(self,sus1,sus2,path=[]):
-        net=self.__net_dict
-        path=path+[sus1]
-        if sus1==sus2:
-            return path
-        if sus1 not in graph:
-            return None
-        for sus in graph[sus1]:
-            if sus not in path:
-                extended_path=self.find_path(sus,sus2,path)
-                if extended_path:
-                    return extended_path
-        return None
+#    #check if two suspects are connected
+#    def find_path(self,sus1,sus2,path=[]):
+#        net=self.__net_dict
+#        path=path+[sus1]
+#        if sus1==sus2:
+#            return path
+#        if sus1 not in graph:
+#            return None
+#        for sus in graph[sus1]:
+#            if sus not in path:
+#                extended_path=self.find_path(sus,sus2,path)
+#                if extended_path:
+#                    return extended_path
+#        return None
     
     def return_Dict(self):
         return self.__net_dict

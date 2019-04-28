@@ -51,3 +51,6 @@ to-do-list:
 	- finish the function to check if two suspects have common friend
 	- add function to input all relationships into dict for network
 	- import networkx to draw relationship graph
+
+2019-4-27
+- finish all codes but not test yet

@@ -8,6 +8,9 @@ Created on Fri Apr 12 21:44:49 2019
 import sqlite3
 import datetime
 from mynetwork import myNetwork
+from itertools import combinations
+import networkx as nx
+import matplotlib.pyplot as plt
 
 #read csv file to get network dictionary
 myFile='network.txt'
@@ -120,16 +123,6 @@ def add_suspect():
             conn.commit()
             loop=input("Continue entering experience? Yes-1, No-0 :")
     
-#    network.add_node(sus_no)
-#   
-#    #compare suspect experience with all suspects in the database, if two are connected, add relation into our network
-#    sus1_exp=get_experience_from_db(sus_no)
-#    for sus in network.nodes():
-#        if sus!=sus_no:
-#            sus2_exp=get_experience_from_db(sus)
-#            if work_together(sus1_exp,sus2_exp):
-#                network.add_relation({sus,sus_no})
-#                print(network.return_Dict())
                 
 def work_together(sus_no1,sus_no2):
     exp1=get_experience_from_db(sus_no1)
@@ -146,22 +139,84 @@ def get_suspect_address(sus_no):
     street_name,street_no=cur.fetchone()
     return street_name,street_no
 
-def are_neighbours(sus_no1,sus_no2):
-    street_name1,street_no1=get_suspect_address(sus_no1)
-    street_name2,street_no2=get_suspect_address(sus_no2)
+def are_neighbours(twosus):
+    sus1=list(twosus)[0]
+    sus2=list(twosus)[1]
+    street_name1,street_no1=get_suspect_address(sus1)
+    street_name2,street_no2=get_suspect_address(sus2)
     if street_name1==street_name2:
         if abs(street_no1-street_no2)<=5:
             return True
     return False
     
+def add_into_network():
+    #get info from database to create network
+    #firstly get all suspects and add into network as nodes
+    cur.execute('''select sus_no from suspects''')
+    all_sus=cur.fetchall()
+    for sus in all_sus:
+        network.add_node(sus)
+    
+    #secondly add relations (edges)
+    #two ways to define if two nodes are connected
+    #1: if they work together
+    for sus in all_sus:
+        sus_exp=get_experience_from_db(sus)
+        for exp in sus_exp:
+            exp_location=exp[2]
+            exp_start_date=exp[0]
+            exp_end_date=exp[1]
+            #check if there is a sus who has same location 
+            cur.execute('''select sus_no,start_date,end_date from experiences where location=?''',(exp_location,))
+            possible_sus=cur.fetchall()
+            for possible in possible_sus:
+                if possible[0]!=sus:
+                    if(exp_start_date,exp_end_date,possible[1],possible[2]):
+                        if not network.if_in_relation((sus,possible[0])):
+                            network.add_relation((sus,possible[0]))
+                            
+    #2: if two are neighbours
+    for c in combinations(all_sus,2):
+        if not network.if_in_relation(c):
+            if are_neighbours(c):
+                network.add_relation(c)
+                
+    #write network info into txt file
+    myDict=network.return_Dict()
+    print(myDict)
+    with open(myFile,'w') as f:
+        line=''
+        for k in myDict:
+            line+=k+' '
+            for element in myDict[k]:
+                line+=element+' '
+            line+='\n'
+            f.write(line)
+            line=''
+    
+
 def are_acquaintances(sus_no1,sus_no2):
-    #if two suspects work together
-    if work_together(sus_no1,sus_no2):
+    two_sus=set(sus_no1,sus_no2)
+    #if they know directly
+    if network.if_in_relation(two_sus):
         return True
-    #if two suspects are neighbours(same street, difference of street numbers is less than 5)
-    if are_neighbours(sus_no1,sus_no2):
+    if network.if_share_friend(two_sus):
         return True
-    #if two suspects have common friend
+    return False
+
+def check_two_suspects_acquaintances():
+    sus_first_name1=input("Enter first suspect's first name:" )
+    sus_last_name1=input("Enter first suspect's last name:" )
+    sus_first_name2=input("Enter second suspect's first name:" )
+    sus_last_name2=input("Enter second suspect's last name:" )
+    cur.execute('''select sus_no from suspects where first_name=? and last_name=?''',(sus_first_name1,sus_last_name1))
+    sus_no1=cur.fetchone()
+    cur.execute('''select sus_no from suspects where first_name=? and last_name=?''',(sus_first_name2,sus_last_name2))
+    sus_no2=cur.fetchone()
+    if are_acquaintances(sus_no1,sus_no2):
+        print("They might know each other!")
+    else:
+        print("They might not know each other!")
                 
 def time_overlap(start_date1,end_date1,start_date2,end_date2):
     if start_date1>start_date2 and start_date1<end_date2:
@@ -169,6 +224,21 @@ def time_overlap(start_date1,end_date1,start_date2,end_date2):
     if start_date2>start_date1 and start_date2<end_date1:
         return True
     return False
+
+def printNetwork():
+    g=nx.Graph()
+    net_dict=network.return_Dict()
+    for k in net_dict:
+        g.add_node(k)
+    relations=network().generate_relations()
+    for relation in relations:
+        node1=relation.pop()
+        node2=relation.pop()
+        g.add_edge(node1,node2)
+    nx.draw(g)
+    plt.savefig('network.png')
+    plt.show()
+    
                 
 def main_menu():
     loop=True
@@ -193,27 +263,16 @@ def main_menu():
             except:
                 print("Wrong info, try again")
         elif choice==4:
-            print('xxx')
+            check_two_suspects_acquaintances()
         elif choice==5:
-            print("x")
-        elif choice==6:
+            printNetwork()
+        else:
             loop=False
         
     
 
 if __name__=='__main__':
     main_menu()
-    #save network dictionary into csv file
-    myDict=network.return_Dict()
-    print(myDict)
-    with open(myFile,'w') as f:
-        line=''
-        for k in myDict:
-            line+=k+' '
-            for element in myDict[k]:
-                line+=element+' '
-            line+='\n'
-            f.write(line)
-            line=''
+    
     conn.close()
 
