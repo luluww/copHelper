@@ -15,6 +15,9 @@ class myNetwork(object):
             net_dict={}
         self.__net_dict=net_dict
         
+    def clear_all(self):
+        self.__net_dict={}
+        
     def nodes(self):
         return list(self.__net_dict.keys())
     
@@ -35,6 +38,7 @@ class myNetwork(object):
             node2=node1
         if node1 in self.__net_dict:
             self.__net_dict[node1].append(node2)
+            self.__net_dict[node2].append(node1)
         else:
             self.__net_dict[node1]=[node2]
             
