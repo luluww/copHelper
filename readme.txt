@@ -54,3 +54,10 @@ to-do-list:
 
 2019-4-27
 - finish all codes but not test yet
+
+2019-4-28
+- remove one unnecessary table
+- fix type error 
+- fix graph
+- mostly done
+
