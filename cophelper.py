@@ -42,7 +42,7 @@ cur.execute('''create table if not exists experiences(exp_no integer not null,
                                         primary key (exp_no),
                                         foreign key (sus_no) references suspects(sus_no))''')
 
-def readNetworkFile():
+def read_network_file():
     myDict={}
     try:
         with open(myFile,'r') as f:
@@ -54,7 +54,7 @@ def readNetworkFile():
     return myDict
 
 
-def strToDate(s):
+def str_to_date(s):
     [year,month,day]=[int(item) for item in s.split('-')]
     return datetime.date(year,month,day)
 
@@ -63,7 +63,7 @@ def strToDate(s):
 #    case_name=input("Case Name: ")
 #    return case_no,case_name
 
-def getSuspectInfo():
+def get_suspect_info():
     sus_no=input("Suspect no: ")
     first_name=input("First name: ")
     last_name=input("Last name: ")
@@ -73,7 +73,7 @@ def getSuspectInfo():
     street_no=input("Street number: ")
     return sus_no,first_name,last_name,gender,birth_date,street_name,street_no
 
-def getExperience():
+def get_experience():
     exp_no=input("Experience No.: ")
     sus_no=input("Suspect number: ")
     start_date=input("Start date(YYYY-MM-DD): ")
@@ -81,7 +81,7 @@ def getExperience():
     location=input("Location: ")
     return exp_no,sus_no,start_date,end_date,location
 
-def getExperienceWithSusNo():
+def get_experience_with_susno():
     exp_no=input("Experience No.: ")
     start_date=input("Start date(YYYY-MM-DD): ")
     end_date=input("End date(YYYY-MM-DD): ")
@@ -109,7 +109,7 @@ def get_experience_from_db(sus_no):
 
 def add_suspect():
     #get suspect information from cop
-    sus_no,first_name,last_name,gender,birth_date,street_name,street_no=getSuspectInfo()
+    sus_no,first_name,last_name,gender,birth_date,street_name,street_no=get_suspect_info()
     #enter basic information into database
     cur.execute('''insert into suspects(sus_no,first_name,last_name,gender,birth_date,street_name,street_no) values(?,?,?,?,?,?,?)''',(sus_no,first_name,last_name,gender,birth_date,street_name,street_no))
     conn.commit()
@@ -121,7 +121,7 @@ def add_suspect():
 def add_experience(sus_no):
     loop=1
     while loop:
-        exp_no,start_date,end_date,location=getExperienceWithSusNo()
+        exp_no,start_date,end_date,location=get_experience_with_susno()
         cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(exp_no,sus_no,start_date,end_date,location))
         conn.commit()
         loop=int(input("Continue entering experience? Yes-1, No-0 :"))
@@ -129,7 +129,7 @@ def add_experience(sus_no):
 def add_experience_complete():
     loop=1
     while loop:
-       cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(getExperience()))
+       cur.execute('''insert into experiences(exp_no,sus_no,start_date,end_date,location) values(?,?,?,?,?)''',(get_experience()))
        conn.commit()
        loop=int(input("Continue entering experience? Yes-1, No-0 :"))
        
@@ -246,7 +246,7 @@ def time_overlap(start_date1,end_date1,start_date2,end_date2):
         return True
     return False
 
-def printNetwork():
+def print_network():
     g=nx.Graph()
         
     add_into_network()
@@ -282,7 +282,7 @@ def main_menu():
         elif choice==3:
             check_two_suspects_acquaintances()
         elif choice==4:
-            printNetwork()
+            print_network()
         else:
             loop=False
         

@@ -61,3 +61,11 @@ to-do-list:
 - fix graph
 - mostly done
 
+2019-5-5
+to-do-list:
+- setup.py
+- __init__.py
+- requirements.txt
+- peewee to replace sqlite
+- add an attribute to describe two peoples' friendship, by example, if friendship=100, two peoples are best friends, if friendship=-100, they are enemies
+- change object to dict
