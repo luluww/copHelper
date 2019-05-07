@@ -69,3 +69,6 @@ to-do-list:
 - peewee to replace sqlite
 - add an attribute to describe two peoples' friendship, by example, if friendship=100, two peoples are best friends, if friendship=-100, they are enemies
 - change object to dict
+
+2019-5-6
+- add requirements.txt by conda list -- export >requirements.txt
