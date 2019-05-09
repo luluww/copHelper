@@ -72,3 +72,9 @@ to-do-list:
 
 2019-5-6
 - add requirements.txt by conda list -- export >requirements.txt
+
+2019-5-8
+- use virtualenv to create py369 virtual environment for this project
+- pip freeze requirements.txt
+- try create setup.py
+- add LICENSE
