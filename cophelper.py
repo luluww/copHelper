@@ -12,6 +12,7 @@ from itertools import combinations
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 #read csv file to get network dictionary
 myFile='network.txt'
 network=myNetwork()
